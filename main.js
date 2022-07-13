@@ -6,6 +6,7 @@ const ClockColor = '#fff';
 const PlayerRadius0 = 80;
 const PlayerRadius1 = 60;
 const PlayerRadius2 = 40;
+const PlayerRadius3 = 20;
 const LineWidth = 10;
 const Countdown = 2000;
 const ListOfColors = [
@@ -36,7 +37,6 @@ function getColor() {
     }
   }
   gbl.colors[i] = true;
-  console.log(`got color ${ListOfColors[i]}`);
   return ListOfColors[i];
 }
 
@@ -121,6 +121,14 @@ function touchEnd(ev) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     if (id !== undefined) {
+      if (gbl.state == StatePicked && gbl.players[id].id == gbl.starter.id) {
+        gbl.animations.push({
+          fn: fadeStarter,
+          timestamp: new Date(),
+          ...gbl.players[id],
+          alpha: 1,
+        })
+      }
       returnColor(gbl.players[id].color);
       delete gbl.players[id];
       resetCountdown();
@@ -159,28 +167,26 @@ function initAll() {
 initAll();
 
 function drawPlayer(player, winner) {
-  var ctx = gbl.ctx;
-  ctx.strokeStyle = player.color;
-  ctx.lineWidth = LineWidth;
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, PlayerRadius1, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // if (winner) {
-  //   ctx.fillStyle = '#333';
-  //   ctx.beginPath();
-  //   ctx.arc(player.x, player.y, PlayerRadius2, 0, Math.PI * 2);
-  //   ctx.fill();
-  // }
+  if (gbl.state == StatePicked) {
+    if (player.id == gbl.starter.id) {
+      drawStarter({
+        ...player,
+        alpha: 1,
+      });
+    }
+  } else {
+    var ctx = gbl.ctx;
+    ctx.strokeStyle = player.color;
+    ctx.lineWidth = LineWidth;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, PlayerRadius1, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 }
 
 function drawPlayers() {
-  if (gbl.state == StatePicked) {
-    drawPlayer(gbl.starter, true);
-  } else {
-    for (const key in gbl.players) {
-      drawPlayer(gbl.players[key], false);
-    }
+  for (const key in gbl.players) {
+    drawPlayer(gbl.players[key], false);
   }
 }
 
@@ -211,17 +217,6 @@ function drawGrow(grow) {
     }
     ctx.fillRect(0, 0, gbl.width, gbl.height);
   }
-
-  ctx.fillStyle = '#333';
-  ctx.beginPath();
-  ctx.arc(grow.x, grow.y, PlayerRadius2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = grow.color;
-  ctx.beginPath();
-  ctx.arc(grow.x, grow.y, 20, 0, Math.PI * 2);
-  ctx.fill();
-
   return false;
 }
 
@@ -231,25 +226,68 @@ function drawFade(fade) {
   ctx.fillStyle = fade.color;
   ctx.fillRect(0, 0, gbl.width, gbl.height);
 
-  ctx.fillStyle = '#333';
-  ctx.beginPath();
-  ctx.arc(fade.x, fade.y, PlayerRadius2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = fade.color;
-  ctx.beginPath();
-  ctx.arc(fade.x, fade.y, 20, 0, Math.PI * 2);
-  ctx.fill();
-
   const d = new Date();
-  const FadeRate = 0.1;
+  const FadeRate = 1;
   fade.alpha += (d - fade.timestamp) / 1000 * FadeRate;
+  fade.timestamp = d;
   if (fade.alpha >= 1) {
     fade.alpha = 1;
   }
   ctx.fillStyle = `rgba(33, 33, 33, ${fade.alpha})`;
   ctx.fillRect(0, 0, gbl.width, gbl.height);
   if (fade.alpha >= 1) {
+    return true;
+  }
+  return false;
+}
+
+function drawStarter(starter) {
+  const ctx = gbl.ctx;
+
+  ctx.strokeStyle = `rgba(33, 33, 33, ${starter.alpha})`;
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius0, 0, Math.PI / 5);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius0, Math.PI, Math.PI + Math.PI / 5);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius1, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = `rgba(33, 33, 33, ${starter.alpha})`;
+  ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = starter.color;
+  ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = `rgba(33, 33, 33, ${1 - starter.alpha})`;
+  ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function fadeStarter(starter) {
+  const ctx = gbl.ctx;
+
+  const d = new Date();
+  const FadeRate = -1;
+  starter.alpha += (d - starter.timestamp) / 1000 * FadeRate;
+  starter.timestamp = d;
+  if (starter.alpha < 0) {
+    starter.alpha = 0;
+  }
+
+  drawStarter(starter);
+
+  if (starter.alpha == 0) {
     return true;
   }
   return false;
