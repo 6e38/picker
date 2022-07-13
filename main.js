@@ -12,12 +12,12 @@ const ListOfColors = [
   '#ff4e50',
   '#fc913a',
   '#f9d423',
-  // '#ede574',
-  // '#e1f5c4',
-  // '#a82743',
-  // '#e15e32',
-  // '#c0d23e',
-  // '#e5f04c',
+  '#ede574',
+  '#e1f5c4',
+  '#a82743',
+  '#e15e32',
+  '#c0d23e',
+  '#e5f04c',
 ];
 const StateWait = 0;
 const StatePicked = 1;
@@ -36,6 +36,7 @@ function getColor() {
     }
   }
   gbl.colors[i] = true;
+  console.log(`got color ${ListOfColors[i]}`);
   return ListOfColors[i];
 }
 
@@ -62,6 +63,8 @@ function resetCountdown() {
       gbl.animations.push({
         fn: drawFade,
         color: gbl.starter.color,
+        x: gbl.starter.x,
+        y: gbl.starter.y,
         alpha: 0,
         timestamp: new Date(),
       });
@@ -79,7 +82,7 @@ function resetCountdown() {
 function touchStart(ev) {
   ev.preventDefault();
   ev.stopPropagation();
-  for (const n in ev.changedTouches) {
+  for (var n = 0; n < ev.changedTouches.length; n++) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     const color = getColor();
@@ -101,7 +104,7 @@ function touchStart(ev) {
 function touchMove(ev) {
   ev.preventDefault();
   ev.stopPropagation();
-  for (const n in ev.changedTouches) {
+  for (var n = 0; n < ev.changedTouches.length; n++) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     if (id !== undefined) {
@@ -114,7 +117,7 @@ function touchMove(ev) {
 function touchEnd(ev) {
   ev.preventDefault();
   ev.stopPropagation();
-  for (const n in ev.changedTouches) {
+  for (var n = 0; n < ev.changedTouches.length; n++) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     if (id !== undefined) {
@@ -163,12 +166,12 @@ function drawPlayer(player, winner) {
   ctx.arc(player.x, player.y, PlayerRadius1, 0, Math.PI * 2);
   ctx.stroke();
 
-  if (winner) {
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, PlayerRadius2, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // if (winner) {
+  //   ctx.fillStyle = '#333';
+  //   ctx.beginPath();
+  //   ctx.arc(player.x, player.y, PlayerRadius2, 0, Math.PI * 2);
+  //   ctx.fill();
+  // }
 }
 
 function drawPlayers() {
@@ -208,6 +211,17 @@ function drawGrow(grow) {
     }
     ctx.fillRect(0, 0, gbl.width, gbl.height);
   }
+
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(grow.x, grow.y, PlayerRadius2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = grow.color;
+  ctx.beginPath();
+  ctx.arc(grow.x, grow.y, 20, 0, Math.PI * 2);
+  ctx.fill();
+
   return false;
 }
 
@@ -217,8 +231,18 @@ function drawFade(fade) {
   ctx.fillStyle = fade.color;
   ctx.fillRect(0, 0, gbl.width, gbl.height);
 
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(fade.x, fade.y, PlayerRadius2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = fade.color;
+  ctx.beginPath();
+  ctx.arc(fade.x, fade.y, 20, 0, Math.PI * 2);
+  ctx.fill();
+
   const d = new Date();
-  const FadeRate = 1;
+  const FadeRate = 0.1;
   fade.alpha += (d - fade.timestamp) / 1000 * FadeRate;
   if (fade.alpha >= 1) {
     fade.alpha = 1;
@@ -244,6 +268,8 @@ function pickStartingPlayer() {
     fn: drawGrow,
     timestamp: new Date(),
     color: player.color,
+    x: player.x,
+    y: player.y,
     r: 30,
   });
 }
