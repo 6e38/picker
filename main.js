@@ -1,7 +1,7 @@
 // 6e38
 // (c) 2022, Nathan Jenne
 
-const MinPlayers = 1;
+const MinPlayers = 2;
 const BackgroundColor = 'rgb(51, 51, 51)';
 const ClockColor = '#fff';
 const PlayerRadius0 = 80;
@@ -320,6 +320,9 @@ function pickStartingPlayer() {
     color: player.color,
     r: 30,
   });
+  if (window.navigator.vibrate) {
+    window.navigator.vibrate([200]);
+  }
 }
 
 function drawCountdown() {
