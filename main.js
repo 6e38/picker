@@ -2,9 +2,11 @@
 // (c) 2022, Nathan Jenne
 
 const BackgroundColor = '#333';
+const ClockColor = '#fff';
 const PlayerRadius1 = 60;
 const PlayerRadius2 = 40;
 const LineWidth = 10;
+const Countdown = 3000;
 const ListOfColors = [
   '#ff4e50',
   '#fc913a',
@@ -17,6 +19,8 @@ const ListOfColors = [
   '#c0d23e',
   '#e5f04c',
 ];
+const StateWait = 0;
+const StatePicked = 1;
 
 var gbl = {};
 
@@ -47,6 +51,18 @@ function resize() {
   gbl.height = gbl.ctx.canvas.height;
 }
 
+function resetCountdown() {
+  if (gbl.stat == StatePicked) {
+    return;
+  }
+  const n = Object.keys(gbl.players).length;
+  if (n > 1) {
+    gbl.timestamp = new Date();
+  } else {
+    gbl.timestamp = 0;
+  }
+}
+
 function touchStart(ev) {
   ev.preventDefault();
   ev.stopPropagation();
@@ -60,6 +76,7 @@ function touchStart(ev) {
         x: t.clientX,
         y: t.clientY,
       };
+      resetCountdown();
     }
   }
 }
@@ -86,6 +103,7 @@ function touchEnd(ev) {
     if (id !== undefined) {
       returnColor(gbl.players[id].color);
       delete gbl.players[id];
+      resetCountdown();
     }
   }
 }
@@ -104,6 +122,9 @@ function initAll() {
     lastUpdate: new Date(),
     players: {},
     colors,
+    timestamp: 0,
+    state: StateWait,
+    starter: null,
   };
 
   resize();
@@ -116,7 +137,7 @@ function initAll() {
 
 initAll();
 
-function drawPlayer(player) {
+function drawPlayer(player, winner) {
   var ctx = gbl.ctx;
   ctx.strokeStyle = player.color;
   ctx.lineWidth = LineWidth;
@@ -131,9 +152,60 @@ function drawPlayer(player) {
 }
 
 function drawPlayers() {
-  for (const key in gbl.players) {
-    drawPlayer(gbl.players[key]);
+  if (gbl.state == StatePicked) {
+    drawPlayer(gbl.starter, true);
+  } else {
+    for (const key in gbl.players) {
+      drawPlayer(gbl.players[key], false);
+    }
   }
+}
+
+function checkCountdown() {
+  if (gbl.timestamp == 0) {
+    return false;
+  }
+  const n = new Date();
+  return n - gbl.timestamp >= Countdown;
+}
+
+function pickStartingPlayer() {
+  const list = Object.keys(gbl.players);
+  const n = Math.floor(Math.random() * list.length);
+  const player = gbl.players[list[n]];
+  gbl.starter = {
+    ...player,
+  };
+  gbl.state = StatePicked;
+  gbl.timestamp = 0;
+}
+
+function drawCountdown() {
+  if (gbl.timestamp == 0) {
+    return;
+  }
+
+  var x = gbl.width / 2;
+  var y = gbl.height / 2;
+
+  var ctx = gbl.ctx;
+
+  ctx.strokeStyle = ClockColor;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(x, y, 30, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const n = new Date();
+  var ms = n - gbl.timestamp;
+  var percent = ms / Countdown;
+  var theta = Math.PI * 2 * percent - Math.PI / 2;
+
+  ctx.fillStyle = ClockColor;
+  ctx.lineWidth = 30;
+  ctx.beginPath();
+  ctx.arc(x, y, 15, Math.PI * 3 / 2, theta);
+  ctx.stroke();
 }
 
 setInterval(() => {
@@ -144,11 +216,16 @@ setInterval(() => {
   ctx.fillStyle = BackgroundColor;
   ctx.fillRect(0, 0, width, height);
 
+  if (checkCountdown()) {
+    pickStartingPlayer();
+  }
+
   var current = new Date();
   var dt = (current - gbl.lastUpdate) / 1000;
   if (dt > 10) {
     dt = 0.01; // Pick up where you left off when javascript goes to sleep
   }
   drawPlayers();
+  drawCountdown();
   gbl.lastUpdate = current;
 }, 1000 / 60);
