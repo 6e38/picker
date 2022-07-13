@@ -1,7 +1,8 @@
 // 6e38
 // (c) 2022, Nathan Jenne
 
-const BackgroundColor = '#333';
+const MinPlayers = 1;
+const BackgroundColor = 'rgb(51, 51, 51)';
 const ClockColor = '#fff';
 const PlayerRadius0 = 80;
 const PlayerRadius1 = 60;
@@ -60,11 +61,9 @@ function resetCountdown() {
   if (gbl.state == StatePicked) {
     if (n == 0) {
       gbl.state = StateWait;
-      gbl.animations.push({
+      gbl.animations1.push({
         fn: drawFade,
         color: gbl.starter.color,
-        x: gbl.starter.x,
-        y: gbl.starter.y,
         alpha: 0,
         timestamp: new Date(),
       });
@@ -72,7 +71,7 @@ function resetCountdown() {
     }
     return;
   }
-  if (n > 1) {
+  if (n >= MinPlayers) {
     gbl.timestamp = new Date();
   } else {
     gbl.timestamp = 0;
@@ -121,12 +120,13 @@ function touchEnd(ev) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     if (id !== undefined) {
-      if (gbl.state == StatePicked && gbl.players[id].id == gbl.starter.id) {
-        gbl.animations.push({
+      if (gbl.state == StatePicked && id == gbl.starter.id) {
+        gbl.animations2.push({
           fn: fadeStarter,
-          timestamp: new Date(),
+          alphaTimestamp: new Date(),
           ...gbl.players[id],
           alpha: 1,
+          theta: 0,
         })
       }
       returnColor(gbl.players[id].color);
@@ -153,7 +153,8 @@ function initAll() {
     timestamp: 0,
     state: StateWait,
     starter: null,
-    animations: [],
+    animations1: [],
+    animations2: [],
   };
 
   resize();
@@ -169,10 +170,7 @@ initAll();
 function drawPlayer(player, winner) {
   if (gbl.state == StatePicked) {
     if (player.id == gbl.starter.id) {
-      drawStarter({
-        ...player,
-        alpha: 1,
-      });
+      drawStarter(player);
     }
   } else {
     var ctx = gbl.ctx;
@@ -233,7 +231,7 @@ function drawFade(fade) {
   if (fade.alpha >= 1) {
     fade.alpha = 1;
   }
-  ctx.fillStyle = `rgba(33, 33, 33, ${fade.alpha})`;
+  ctx.fillStyle = `rgba(51, 51, 51, ${fade.alpha})`;
   ctx.fillRect(0, 0, gbl.width, gbl.height);
   if (fade.alpha >= 1) {
     return true;
@@ -244,34 +242,48 @@ function drawFade(fade) {
 function drawStarter(starter) {
   const ctx = gbl.ctx;
 
-  ctx.strokeStyle = `rgba(33, 33, 33, ${starter.alpha})`;
+  if (!starter.timestamp) {
+    starter.timestamp = new Date();
+    starter.theta = 0;
+  }
+
+  if (starter.alpha === undefined) {
+    starter.alpha = 1;
+  }
+
+  const d = new Date();
+  const SpinRate = Math.PI;
+  starter.theta += (d - starter.timestamp) / 1000 * SpinRate;
+  starter.timestamp = d;
+
+  ctx.strokeStyle = `rgba(51, 51, 51, ${starter.alpha})`;
   ctx.lineWidth = 10;
   ctx.beginPath();
-  ctx.arc(starter.x, starter.y, PlayerRadius0, 0, Math.PI / 5);
+  ctx.arc(starter.x, starter.y, PlayerRadius0, starter.theta, starter.theta + Math.PI / 5);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.arc(starter.x, starter.y, PlayerRadius0, Math.PI, Math.PI + Math.PI / 5);
+  ctx.arc(starter.x, starter.y, PlayerRadius0, starter.theta + Math.PI, starter.theta + Math.PI + Math.PI / 5);
   ctx.stroke();
 
   ctx.beginPath();
   ctx.arc(starter.x, starter.y, PlayerRadius1, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = `rgba(33, 33, 33, ${starter.alpha})`;
+  ctx.fillStyle = `rgba(51, 51, 51, ${starter.alpha})`;
   ctx.beginPath();
   ctx.arc(starter.x, starter.y, PlayerRadius2, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = starter.color;
-  ctx.beginPath();
-  ctx.arc(starter.x, starter.y, PlayerRadius3, 0, Math.PI * 2);
-  ctx.fill();
+  // ctx.fillStyle = starter.color;
+  // ctx.beginPath();
+  // ctx.arc(starter.x, starter.y, PlayerRadius3, 0, Math.PI * 2);
+  // ctx.fill();
 
-  ctx.fillStyle = `rgba(33, 33, 33, ${1 - starter.alpha})`;
-  ctx.beginPath();
-  ctx.arc(starter.x, starter.y, PlayerRadius3, 0, Math.PI * 2);
-  ctx.fill();
+  // ctx.fillStyle = `rgba(51, 51, 51, ${1 - starter.alpha})`;
+  // ctx.beginPath();
+  // ctx.arc(starter.x, starter.y, PlayerRadius3 + 1, 0, Math.PI * 2);
+  // ctx.fill();
 }
 
 function fadeStarter(starter) {
@@ -279,8 +291,8 @@ function fadeStarter(starter) {
 
   const d = new Date();
   const FadeRate = -1;
-  starter.alpha += (d - starter.timestamp) / 1000 * FadeRate;
-  starter.timestamp = d;
+  starter.alpha += (d - starter.alphaTimestamp) / 1000 * FadeRate;
+  starter.alphaTimestamp = d;
   if (starter.alpha < 0) {
     starter.alpha = 0;
   }
@@ -302,12 +314,10 @@ function pickStartingPlayer() {
   };
   gbl.state = StatePicked;
   gbl.timestamp = 0;
-  gbl.animations.push({
+  gbl.animations1.push({
     fn: drawGrow,
     timestamp: new Date(),
     color: player.color,
-    x: player.x,
-    y: player.y,
     r: 30,
   });
 }
@@ -340,16 +350,16 @@ function drawCountdown() {
   ctx.stroke();
 }
 
-function drawAnimations() {
+function drawAnimations(animations) {
   var listToRemove = [];
-  gbl.animations.forEach((anim, i) => {
+  animations.forEach((anim, i) => {
     var remove = anim.fn(anim);
     if (remove) {
       listToRemove.push(i);
     }
   });
   for (var i = listToRemove.length - 1; i >= 0; i--) {
-    gbl.animations.splice(listToRemove[i], listToRemove[i] + 1);
+    animations.splice(listToRemove[i], listToRemove[i] + 1);
   }
 }
 
@@ -361,7 +371,8 @@ setInterval(() => {
   ctx.fillStyle = BackgroundColor;
   ctx.fillRect(0, 0, width, height);
 
-  drawAnimations();
+  drawAnimations(gbl.animations1);
+  drawAnimations(gbl.animations2);
 
   if (checkCountdown()) {
     pickStartingPlayer();
