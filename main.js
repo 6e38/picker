@@ -12,13 +12,12 @@ const ListOfColors = [
   '#ff4e50',
   '#fc913a',
   '#f9d423',
-  '#ede574',
-  '#e1f5c4',
-  // '#5c323e',
-  '#a82743',
-  '#e15e32',
-  '#c0d23e',
-  '#e5f04c',
+  // '#ede574',
+  // '#e1f5c4',
+  // '#a82743',
+  // '#e15e32',
+  // '#c0d23e',
+  // '#e5f04c',
 ];
 const StateWait = 0;
 const StatePicked = 1;
@@ -27,10 +26,13 @@ var gbl = {};
 
 function getColor() {
   var i = Math.floor(Math.random() * gbl.colors.length);
-  while (gbl.colors[i]) {
+  for (var y = 0; gbl.colors[i]; y++) {
     i++;
     if (i >= gbl.colors.length) {
       i = 0;
+    }
+    if (y >= ListOfColors.length) {
+      return false;
     }
   }
   gbl.colors[i] = true;
@@ -57,6 +59,12 @@ function resetCountdown() {
   if (gbl.state == StatePicked) {
     if (n == 0) {
       gbl.state = StateWait;
+      gbl.animations.push({
+        fn: drawFade,
+        color: gbl.starter.color,
+        alpha: 0,
+        timestamp: new Date(),
+      });
       gbl.starter = null;
     }
     return;
@@ -74,10 +82,14 @@ function touchStart(ev) {
   for (const n in ev.changedTouches) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
+    const color = getColor();
+    if (color == false) {
+      return;
+    }
     if (id !== undefined) {
       gbl.players[id] = {
         id,
-        color: getColor(),
+        color,
         x: t.clientX,
         y: t.clientY,
       };
@@ -130,6 +142,7 @@ function initAll() {
     timestamp: 0,
     state: StateWait,
     starter: null,
+    animations: [],
   };
 
   resize();
@@ -151,11 +164,7 @@ function drawPlayer(player, winner) {
   ctx.stroke();
 
   if (winner) {
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, PlayerRadius0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.fillStyle = player.color;
+    ctx.fillStyle = '#333';
     ctx.beginPath();
     ctx.arc(player.x, player.y, PlayerRadius2, 0, Math.PI * 2);
     ctx.fill();
@@ -180,6 +189,48 @@ function checkCountdown() {
   return n - gbl.timestamp >= Countdown;
 }
 
+function drawGrow(grow) {
+  const ctx = gbl.ctx;
+  ctx.fillStyle = grow.color;
+
+  if (grow.r < Math.sqrt(gbl.height * gbl.height + gbl.width * gbl.width) * 0.75) {
+    const d = new Date();
+    const GrowRate = 3000;
+    grow.r += (d - grow.timestamp) / 1000 * GrowRate;
+    grow.timestamp = d;
+
+    ctx.beginPath();
+    ctx.arc(gbl.width / 2, gbl.height / 2, grow.r, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    if (gbl.state != StatePicked) {
+      return true;
+    }
+    ctx.fillRect(0, 0, gbl.width, gbl.height);
+  }
+  return false;
+}
+
+function drawFade(fade) {
+  const ctx = gbl.ctx;
+
+  ctx.fillStyle = fade.color;
+  ctx.fillRect(0, 0, gbl.width, gbl.height);
+
+  const d = new Date();
+  const FadeRate = 1;
+  fade.alpha += (d - fade.timestamp) / 1000 * FadeRate;
+  if (fade.alpha >= 1) {
+    fade.alpha = 1;
+  }
+  ctx.fillStyle = `rgba(33, 33, 33, ${fade.alpha})`;
+  ctx.fillRect(0, 0, gbl.width, gbl.height);
+  if (fade.alpha >= 1) {
+    return true;
+  }
+  return false;
+}
+
 function pickStartingPlayer() {
   const list = Object.keys(gbl.players);
   const n = Math.floor(Math.random() * list.length);
@@ -189,6 +240,12 @@ function pickStartingPlayer() {
   };
   gbl.state = StatePicked;
   gbl.timestamp = 0;
+  gbl.animations.push({
+    fn: drawGrow,
+    timestamp: new Date(),
+    color: player.color,
+    r: 30,
+  });
 }
 
 function drawCountdown() {
@@ -219,6 +276,19 @@ function drawCountdown() {
   ctx.stroke();
 }
 
+function drawAnimations() {
+  var listToRemove = [];
+  gbl.animations.forEach((anim, i) => {
+    var remove = anim.fn(anim);
+    if (remove) {
+      listToRemove.push(i);
+    }
+  });
+  for (var i = listToRemove.length - 1; i >= 0; i--) {
+    gbl.animations.splice(listToRemove[i], listToRemove[i] + 1);
+  }
+}
+
 setInterval(() => {
   var ctx = gbl.ctx;
   var width = gbl.width;
@@ -226,6 +296,8 @@ setInterval(() => {
 
   ctx.fillStyle = BackgroundColor;
   ctx.fillRect(0, 0, width, height);
+
+  drawAnimations();
 
   if (checkCountdown()) {
     pickStartingPlayer();
