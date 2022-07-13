@@ -3,17 +3,18 @@
 
 const BackgroundColor = '#333';
 const ClockColor = '#fff';
+const PlayerRadius0 = 80;
 const PlayerRadius1 = 60;
 const PlayerRadius2 = 40;
 const LineWidth = 10;
-const Countdown = 3000;
+const Countdown = 2000;
 const ListOfColors = [
   '#ff4e50',
   '#fc913a',
   '#f9d423',
   '#ede574',
   '#e1f5c4',
-  '#5c323e',
+  // '#5c323e',
   '#a82743',
   '#e15e32',
   '#c0d23e',
@@ -52,10 +53,14 @@ function resize() {
 }
 
 function resetCountdown() {
-  if (gbl.stat == StatePicked) {
+  const n = Object.keys(gbl.players).length;
+  if (gbl.state == StatePicked) {
+    if (n == 0) {
+      gbl.state = StateWait;
+      gbl.starter = null;
+    }
     return;
   }
-  const n = Object.keys(gbl.players).length;
   if (n > 1) {
     gbl.timestamp = new Date();
   } else {
@@ -145,10 +150,16 @@ function drawPlayer(player, winner) {
   ctx.arc(player.x, player.y, PlayerRadius1, 0, Math.PI * 2);
   ctx.stroke();
 
-  // ctx.fillStyle = player.color;
-  // ctx.beginPath();
-  // ctx.arc(player.x, player.y, PlayerRadius2, 0, Math.PI * 2);
-  // ctx.fill();
+  if (winner) {
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, PlayerRadius0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = player.color;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, PlayerRadius2, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function drawPlayers() {
