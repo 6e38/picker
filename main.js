@@ -321,8 +321,8 @@ function pickStartingPlayer() {
     color: player.color,
     r: 30,
   });
-  if (window.navigator.vibrate) {
-    window.navigator.vibrate([200]);
+  if (window.navigator.vibrate !== undefined) {
+    window.navigator.vibrate([50,30,50]);
   }
 }
 
