@@ -121,6 +121,7 @@ function touchEnd(ev) {
     const id = t.identifier;
     if (id !== undefined) {
       if (gbl.state == StatePicked && id == gbl.starter.id) {
+        gbl.starter.id = -1;
         gbl.animations2.push({
           fn: fadeStarter,
           alphaTimestamp: new Date(),
