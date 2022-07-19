@@ -14,6 +14,6 @@
     }
   ],
   "start_url": "/picker/index.html",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "portrait"
 }
