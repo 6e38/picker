@@ -1,14 +1,15 @@
 // 6e38
 // (c) 2022, Nathan Jenne
 
+const Scale = 3;
 const MinPlayers = 2;
 const BackgroundColor = 'rgb(51, 51, 51)';
 const ClockColor = '#fff';
-const PlayerRadius0 = 80;
-const PlayerRadius1 = 60;
-const PlayerRadius2 = 40;
-const PlayerRadius3 = 20;
-const LineWidth = 10;
+const PlayerRadius0 = 80 * Scale;
+const PlayerRadius1 = 60 * Scale;
+const PlayerRadius2 = 40 * Scale;
+const PlayerRadius3 = 20 * Scale;
+const LineWidth = 10 * Scale;
 const Countdown = 2000;
 const ListOfColors = [
   '#ff4e50',
@@ -50,10 +51,15 @@ function returnColor(color) {
 }
 
 function resize() {
-  gbl.ctx.canvas.width = window.innerWidth - 20;
-  gbl.ctx.canvas.height = window.innerHeight - 20;
-  gbl.width = gbl.ctx.canvas.width;
-  gbl.height = gbl.ctx.canvas.height;
+  const w = window.innerWidth - 20;
+  const h = window.innerHeight - 20;
+  const canvas = gbl.ctx.canvas;
+  canvas.width = w * Scale;
+  canvas.height = h * Scale;
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+  gbl.width = w * Scale;
+  gbl.height = h * Scale;
 }
 
 function resetCountdown() {
@@ -92,8 +98,8 @@ function touchStart(ev) {
       gbl.players[id] = {
         id,
         color,
-        x: t.clientX,
-        y: t.clientY,
+        x: t.clientX * Scale,
+        y: t.clientY * Scale,
       };
       resetCountdown();
     }
@@ -107,8 +113,8 @@ function touchMove(ev) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     if (id !== undefined) {
-      gbl.players[id].x = t.clientX;
-      gbl.players[id].y = t.clientY;
+      gbl.players[id].x = t.clientX * Scale;
+      gbl.players[id].y = t.clientY * Scale;
     }
   }
 }
@@ -140,6 +146,7 @@ function touchEnd(ev) {
 function initAll() {
   const canvas = document.getElementById('canvas');
   var ctx = canvas.getContext('2d');
+  ctx.scale(Scale, Scale);
 
   var colors = new Array(ListOfColors.length);
   for (var i = 0; i < colors.length; i++) {
@@ -258,7 +265,7 @@ function drawStarter(starter) {
   starter.timestamp = d;
 
   ctx.strokeStyle = `rgba(51, 51, 51, ${starter.alpha})`;
-  ctx.lineWidth = 10;
+  ctx.lineWidth = LineWidth;
   ctx.beginPath();
   ctx.arc(starter.x, starter.y, PlayerRadius0, starter.theta, starter.theta + Math.PI / 5);
   ctx.stroke();
@@ -321,9 +328,9 @@ function pickStartingPlayer() {
     color: player.color,
     r: 30,
   });
-  if (window.navigator.vibrate !== undefined) {
-    window.navigator.vibrate([50,30,50]);
-  }
+  // if (window.navigator.vibrate !== undefined) {
+  //   window.navigator.vibrate([50,30,50]);
+  // }
 }
 
 function drawCountdown() {
@@ -337,9 +344,9 @@ function drawCountdown() {
   var ctx = gbl.ctx;
 
   ctx.strokeStyle = ClockColor;
-  ctx.lineWidth = 5;
+  ctx.lineWidth = LineWidth / 2;
   ctx.beginPath();
-  ctx.arc(x, y, 30, 0, Math.PI * 2);
+  ctx.arc(x, y, PlayerRadius2, 0, Math.PI * 2);
   ctx.stroke();
 
   const n = new Date();
@@ -348,9 +355,9 @@ function drawCountdown() {
   var theta = Math.PI * 2 * percent - Math.PI / 2;
 
   ctx.fillStyle = ClockColor;
-  ctx.lineWidth = 30;
+  ctx.lineWidth = PlayerRadius2;
   ctx.beginPath();
-  ctx.arc(x, y, 15, Math.PI * 3 / 2, theta);
+  ctx.arc(x, y, PlayerRadius2 / 2, Math.PI * 3 / 2, theta);
   ctx.stroke();
 }
 
