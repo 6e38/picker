@@ -337,7 +337,7 @@ function drawCountdown() {
   var ctx = gbl.ctx;
 
   ctx.strokeStyle = ClockColor;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 5;
   ctx.beginPath();
   ctx.arc(x, y, 30, 0, Math.PI * 2);
   ctx.stroke();
