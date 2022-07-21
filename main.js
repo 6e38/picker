@@ -5,6 +5,7 @@ const Scale = 3;
 const MinPlayers = 2;
 const BackgroundColor = 'rgb(51, 51, 51)';
 const ClockColor = '#fff';
+const PlayerRadius = 100 * Scale;
 const PlayerRadius0 = 80 * Scale;
 const PlayerRadius1 = 60 * Scale;
 const PlayerRadius2 = 40 * Scale;
@@ -143,6 +144,50 @@ function touchEnd(ev) {
   }
 }
 
+function click(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const x = ev.clientX;
+  const y = ev.clientY;
+  var id = 0;
+  for (const key in gbl.players) {
+    const player = gbl.players[key];
+    const dx = x * 3 - player.x;
+    const dy = y * 3 - player.y;
+    if (dx * dx + dy * dy < PlayerRadius1 * PlayerRadius1) {
+      id = player.id;
+    }
+  }
+  if (id == 0) {
+    id = gbl.fakeTouchId++;
+    touchStart({
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      changedTouches: {
+        length: 1,
+        0: {
+          identifier: id,
+          clientX: x,
+          clientY: y,
+        },
+      },
+    });
+  } else {
+    touchEnd({
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      changedTouches: {
+        length: 1,
+        0: {
+          identifier: id,
+          clientX: x,
+          clientY: y,
+        },
+      },
+    });
+  }
+}
+
 function initAll() {
   const canvas = document.getElementById('canvas');
   var ctx = canvas.getContext('2d');
@@ -163,6 +208,7 @@ function initAll() {
     starter: null,
     animations1: [],
     animations2: [],
+    fakeTouchId: 100,
   };
 
   resize();
@@ -171,6 +217,8 @@ function initAll() {
   canvas.ontouchstart = touchStart;
   canvas.ontouchmove = touchMove;
   canvas.ontouchend = touchEnd;
+
+  canvas.onclick = click;
 }
 
 initAll();
@@ -179,6 +227,8 @@ function drawPlayer(player, winner) {
   if (gbl.state == StatePicked) {
     if (player.id == gbl.starter.id) {
       drawStarter(player);
+    } else {
+      drawLoser(player);
     }
   } else {
     var ctx = gbl.ctx;
@@ -275,6 +325,14 @@ function drawStarter(starter) {
   ctx.stroke();
 
   ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius, -starter.theta, -starter.theta + Math.PI / 5);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(starter.x, starter.y, PlayerRadius, -starter.theta + Math.PI, -starter.theta + Math.PI + Math.PI / 5);
+  ctx.stroke();
+
+  ctx.beginPath();
   ctx.arc(starter.x, starter.y, PlayerRadius1, 0, Math.PI * 2);
   ctx.stroke();
 
@@ -282,16 +340,15 @@ function drawStarter(starter) {
   ctx.beginPath();
   ctx.arc(starter.x, starter.y, PlayerRadius2, 0, Math.PI * 2);
   ctx.fill();
+}
 
-  // ctx.fillStyle = starter.color;
-  // ctx.beginPath();
-  // ctx.arc(starter.x, starter.y, PlayerRadius3, 0, Math.PI * 2);
-  // ctx.fill();
+function drawLoser(player) {
+  const ctx = gbl.ctx;
 
-  // ctx.fillStyle = `rgba(51, 51, 51, ${1 - starter.alpha})`;
-  // ctx.beginPath();
-  // ctx.arc(starter.x, starter.y, PlayerRadius3 + 1, 0, Math.PI * 2);
-  // ctx.fill();
+  ctx.fillStyle = `rgb(51, 51, 51)`;
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, PlayerRadius3, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function fadeStarter(starter) {
