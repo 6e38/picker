@@ -363,12 +363,12 @@ function drawStarter(starter) {
 }
 
 function drawLoser(player) {
-  const ctx = gbl.ctx;
+  // const ctx = gbl.ctx;
 
-  ctx.fillStyle = `rgb(51, 51, 51)`;
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, PlayerRadius3, 0, Math.PI * 2);
-  ctx.fill();
+  // ctx.fillStyle = `rgb(51, 51, 51)`;
+  // ctx.beginPath();
+  // ctx.arc(player.x, player.y, PlayerRadius3, 0, Math.PI * 2);
+  // ctx.fill();
 }
 
 function fadeStarter(starter) {
