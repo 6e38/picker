@@ -5,6 +5,7 @@ const Scale = 3;
 const MinPlayers = 2;
 const BackgroundColor = 'rgb(51, 51, 51)';
 const ClockColor = '#fff';
+const TransparentClockColor = 'rgba(255, 255, 255, 0.5)';
 const PlayerRadius = 100 * Scale;
 const PlayerRadius0 = 80 * Scale;
 const PlayerRadius1 = 60 * Scale;
@@ -13,15 +14,18 @@ const PlayerRadius3 = 20 * Scale;
 const LineWidth = 10 * Scale;
 const Countdown = 2000;
 const ListOfColors = [
-  '#ff4e50',
-  '#fc913a',
-  '#f9d423',
-  '#ede574',
-  '#e1f5c4',
-  '#a82743',
-  '#e15e32',
-  '#c0d23e',
-  '#e5f04c',
+  '#9AADBF',
+  '#6D98BA',
+  '#DFCCB9',
+  '#C17767',
+  '#C7FFAD',
+  '#FFFD85',
+  '#FFC4C2',
+  '#FFA385',
+  '#62E48D',
+  '#E76B74',
+  '#D7AF70',
+  '#5DDBFE',
 ];
 const StateWait = 0;
 const StatePicked = 1;
@@ -52,8 +56,8 @@ function returnColor(color) {
 }
 
 function resize() {
-  const w = window.innerWidth - 20;
-  const h = window.innerHeight - 20;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
   const canvas = gbl.ctx.canvas;
   canvas.width = w * Scale;
   canvas.height = h * Scale;
@@ -407,14 +411,21 @@ function pickStartingPlayer() {
 }
 
 function drawCountdown() {
-  if (gbl.timestamp == 0) {
-    return;
-  }
-
   var x = gbl.width / 2;
   var y = gbl.height / 2;
 
   var ctx = gbl.ctx;
+
+  if (gbl.timestamp == 0) {
+    if (gbl.state != StatePicked) {
+      ctx.strokeStyle = TransparentClockColor;
+      ctx.lineWidth = LineWidth / 2;
+      ctx.beginPath();
+      ctx.arc(x, y, PlayerRadius2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    return;
+  }
 
   ctx.strokeStyle = ClockColor;
   ctx.lineWidth = LineWidth / 2;
