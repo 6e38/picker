@@ -133,8 +133,6 @@ function touchEnd(ev) {
           fn: fadeStarter,
           alphaTimestamp: new Date(),
           ...gbl.players[id],
-          alpha: 1,
-          theta: 0,
         })
       }
       returnColor(gbl.players[id].color);
