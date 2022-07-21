@@ -145,8 +145,26 @@ function touchEnd(ev) {
 function click(ev) {
   ev.preventDefault();
   ev.stopPropagation();
+
   const x = ev.clientX;
   const y = ev.clientY;
+
+  if (gbl.state == StatePicked) {
+    for (const key in gbl.players) {
+      touchEnd({
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        changedTouches: {
+          length: 1,
+          0: {
+            identifier: gbl.players[key].id,
+          },
+        },
+      });
+    }
+    return;
+  }
+
   var id = 0;
   for (const key in gbl.players) {
     const player = gbl.players[key];
