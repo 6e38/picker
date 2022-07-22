@@ -458,7 +458,7 @@ function drawAnimations(animations) {
   }
 }
 
-setInterval(() => {
+function main() {
   var ctx = gbl.ctx;
   var width = gbl.width;
   var height = gbl.height;
@@ -481,4 +481,7 @@ setInterval(() => {
   drawPlayers();
   drawCountdown();
   gbl.lastUpdate = current;
-}, 1000 / 60);
+  setTimeout(main, 1000 / 60);
+}
+
+main();

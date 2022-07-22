@@ -1,19 +1,16 @@
 {
   "short_name": "Picker",
-  "name": "Pick a player",
+  "name": "",
   "icons": [
     {
       "src": "/picker/resources/logo.png",
       "sizes": "256x256",
       "type": "image/png"
-    },
-    {
-      "src": "/picker/resources/logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
     }
   ],
   "start_url": "/picker/index.html",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "theme_color": "#444444",
+  "background_color": "#444444"
 }
