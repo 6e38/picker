@@ -96,6 +96,8 @@ function touchStart(ev) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     const color = getColor();
+    log(`starting touch for ${id}`);
+    gbl.startCount++;
     if (color == false) {
       return;
     }
@@ -109,6 +111,8 @@ function touchStart(ev) {
       resetCountdown();
     }
   }
+
+  endTouches(ev.touches);
 }
 
 function touchMove(ev) {
@@ -120,6 +124,8 @@ function touchMove(ev) {
     if (id !== undefined) {
       gbl.players[id].x = t.clientX * Scale;
       gbl.players[id].y = t.clientY * Scale;
+    } else {
+      log(`touchMove: undefined id ${id}`);
     }
   }
 }
@@ -127,10 +133,17 @@ function touchMove(ev) {
 function touchEnd(ev) {
   ev.preventDefault();
   ev.stopPropagation();
-  for (var n = 0; n < ev.changedTouches.length; n++) {
-    const t = ev.changedTouches[n];
-    const id = t.identifier;
+
+  endTouches(ev.touches);
+}
+
+function endTouches(touches) {
+  const defunctTouches = findDefunctTouches(touches);
+
+  for (const id of defunctTouches) {
     if (id !== undefined) {
+      log(`ending touch for ${id}`);
+      gbl.endCount++;
       if (gbl.state == StatePicked && id == gbl.starter.id) {
         gbl.starter.id = -1;
         gbl.animations2.push({
@@ -139,11 +152,37 @@ function touchEnd(ev) {
           ...gbl.players[id],
         })
       }
-      returnColor(gbl.players[id].color);
-      delete gbl.players[id];
+      if (gbl.players.hasOwnProperty(id)) {
+        returnColor(gbl.players[id].color);
+        delete gbl.players[id];
+      }
       resetCountdown();
     }
   }
+}
+
+function touchCancel(ev) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  gbl.cancelCount++;
+
+  endTouches(ev.touches);
+}
+
+function findDefunctTouches(touches) {
+  const defunctTouches = [];
+  const map = {};
+  for (var n = 0; n < touches.length; n++) {
+    map[touches[n].identifier] = true;
+  }
+  const ids = Object.keys(gbl.players);
+  for (const id of ids) {
+    if (!map.hasOwnProperty(id)) {
+      gbl.defunctCount++;
+      defunctTouches.push(id);
+    }
+  }
+  return defunctTouches;
 }
 
 function click(ev) {
@@ -154,18 +193,13 @@ function click(ev) {
   const y = ev.clientY;
 
   if (gbl.state == StatePicked) {
-    for (const key in gbl.players) {
-      touchEnd({
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        changedTouches: {
-          length: 1,
-          0: {
-            identifier: gbl.players[key].id,
-          },
-        },
-      });
-    }
+    touchEnd({
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      touches: {
+        length: 0,
+      },
+    });
     return;
   }
 
@@ -191,6 +225,7 @@ function click(ev) {
           clientY: y,
         },
       },
+      touches: getCurrentTouches({identifier: id, clientX: x, clientY: y}, null),
     });
   } else {
     touchEnd({
@@ -204,8 +239,30 @@ function click(ev) {
           clientY: y,
         },
       },
+      touches: getCurrentTouches(null, id),
     });
   }
+}
+
+function getCurrentTouches(touch, identifierToRemove) {
+  const touches = {
+    length: 0,
+  }
+  for (const id in gbl.players) {
+    if (id != identifierToRemove) {
+      touches[touches.length] = {
+        identifier: id,
+        clientX: gbl.players[id].x,
+        clientY: gbl.players[id].y,
+      };
+      touches.length++;
+    }
+  }
+  if (touch != null) {
+    touches[touches.length] = touch;
+    touches.length++;
+  }
+  return touches;
 }
 
 function initAll() {
@@ -229,6 +286,11 @@ function initAll() {
     animations1: [],
     animations2: [],
     fakeTouchId: 100,
+    cancelCount: 0,
+    startCount: 0,
+    endCount: 0,
+    defunctCount: 0,
+    log: ['Log start'],
   };
 
   resize();
@@ -446,6 +508,30 @@ function drawCountdown() {
   ctx.stroke();
 }
 
+function drawDebug() {
+  const ctx = gbl.ctx;
+  ctx.font = '50px monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('player count: ' + Object.keys(gbl.players).length, 10, 50);
+  ctx.fillText('cancel count: ' + gbl.cancelCount, 10, 100);
+  ctx.fillText('start  count: ' + gbl.startCount, 10, 150);
+  ctx.fillText('end    count: ' + gbl.endCount, 10, 200);
+  ctx.fillText('defunctcount: ' + gbl.defunctCount, 10, 250);
+
+  var y = 350;
+  for (const line of gbl.log) {
+    ctx.fillText(line, 10, y);
+    y += 50;
+  }
+}
+
+function log(str) {
+  if (gbl.log.length > 20) {
+    gbl.log.shift();
+  }
+  gbl.log.push(str);
+}
+
 function drawAnimations(animations) {
   var listToRemove = [];
   animations.forEach((anim, i) => {
@@ -481,6 +567,7 @@ function main() {
   }
   drawPlayers();
   drawCountdown();
+  drawDebug();
   gbl.lastUpdate = current;
   setTimeout(main, 1000 / 60);
 }
