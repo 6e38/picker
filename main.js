@@ -237,6 +237,7 @@ function initAll() {
   canvas.ontouchstart = touchStart;
   canvas.ontouchmove = touchMove;
   canvas.ontouchend = touchEnd;
+  canvas.ontouchcancel = touchEnd;
 
   canvas.onclick = click;
 }
