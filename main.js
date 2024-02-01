@@ -96,11 +96,11 @@ function touchStart(ev) {
     const t = ev.changedTouches[n];
     const id = t.identifier;
     const color = getColor();
-    log(`starting touch for ${id}`);
-    gbl.startCount++;
     if (color == false) {
       return;
     }
+    log(`starting touch for ${id}`);
+    gbl.startCount++;
     if (id !== undefined) {
       gbl.players[id] = {
         id,
@@ -567,7 +567,7 @@ function main() {
   }
   drawPlayers();
   drawCountdown();
-  drawDebug();
+  // drawDebug();
   gbl.lastUpdate = current;
   setTimeout(main, 1000 / 60);
 }
