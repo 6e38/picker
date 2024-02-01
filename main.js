@@ -99,7 +99,7 @@ function touchStart(ev) {
     if (color == false) {
       return;
     }
-    log(`starting touch for ${id}`);
+    dbg(`starting touch for ${id}`);
     gbl.startCount++;
     if (id !== undefined) {
       gbl.players[id] = {
@@ -125,7 +125,7 @@ function touchMove(ev) {
       gbl.players[id].x = t.clientX * Scale;
       gbl.players[id].y = t.clientY * Scale;
     } else {
-      log(`touchMove: undefined id ${id}`);
+      dbg(`touchMove: undefined id ${id}`);
     }
   }
 }
@@ -141,23 +141,21 @@ function endTouches(touches) {
   const defunctTouches = findDefunctTouches(touches);
 
   for (const id of defunctTouches) {
-    if (id !== undefined) {
-      log(`ending touch for ${id}`);
-      gbl.endCount++;
-      if (gbl.state == StatePicked && id == gbl.starter.id) {
-        gbl.starter.id = -1;
-        gbl.animations2.push({
-          fn: fadeStarter,
-          alphaTimestamp: new Date(),
-          ...gbl.players[id],
-        })
-      }
-      if (gbl.players.hasOwnProperty(id)) {
-        returnColor(gbl.players[id].color);
-        delete gbl.players[id];
-      }
-      resetCountdown();
+    dbg(`ending touch for ${id}`);
+    gbl.endCount++;
+    if (gbl.state == StatePicked && id == gbl.starter.id) {
+      gbl.starter.id = -1;
+      gbl.animations2.push({
+        fn: fadeStarter,
+        alphaTimestamp: new Date(),
+        ...gbl.players[id],
+      })
     }
+    if (gbl.players.hasOwnProperty(id)) {
+      returnColor(gbl.players[id].color);
+      delete gbl.players[id];
+    }
+    resetCountdown();
   }
 }
 
@@ -172,16 +170,23 @@ function touchCancel(ev) {
 function findDefunctTouches(touches) {
   const defunctTouches = [];
   const map = {};
+  var dbgstr = `t (${touches.length}): `;
   for (var n = 0; n < touches.length; n++) {
+    dbgstr += `${touches[n].identifier},`;
     map[touches[n].identifier] = true;
   }
+  dbgstr += ` p (${Object.keys(gbl.players).length}): `;
+  var dbgrm = ` r: `;
   const ids = Object.keys(gbl.players);
   for (const id of ids) {
+    dbgstr += `${id},`;
     if (!map.hasOwnProperty(id)) {
+      dbgrm += `${id},`;
       gbl.defunctCount++;
       defunctTouches.push(id);
     }
   }
+  dbg(dbgstr + dbgrm);
   return defunctTouches;
 }
 
@@ -290,7 +295,7 @@ function initAll() {
     startCount: 0,
     endCount: 0,
     defunctCount: 0,
-    log: ['Log start'],
+    dbglog: ['Log start'],
   };
 
   resize();
@@ -512,24 +517,26 @@ function drawDebug() {
   const ctx = gbl.ctx;
   ctx.font = '50px monospace';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText('player count: ' + Object.keys(gbl.players).length, 10, 50);
-  ctx.fillText('cancel count: ' + gbl.cancelCount, 10, 100);
-  ctx.fillText('start  count: ' + gbl.startCount, 10, 150);
-  ctx.fillText('end    count: ' + gbl.endCount, 10, 200);
-  ctx.fillText('defunctcount: ' + gbl.defunctCount, 10, 250);
+  // ctx.fillText('v2', 10, 50);
+  // return;
+  ctx.fillText('player  count: ' + Object.keys(gbl.players).length, 10, 50);
+  ctx.fillText('cancel  count: ' + gbl.cancelCount, 10, 100);
+  ctx.fillText('start   count: ' + gbl.startCount, 10, 150);
+  ctx.fillText('end     count: ' + gbl.endCount, 10, 200);
+  ctx.fillText('defunct count: ' + gbl.defunctCount, 10, 250);
 
   var y = 350;
-  for (const line of gbl.log) {
+  for (const line of gbl.dbglog) {
     ctx.fillText(line, 10, y);
     y += 50;
   }
 }
 
-function log(str) {
-  if (gbl.log.length > 20) {
-    gbl.log.shift();
+function dbg(str) {
+  if (gbl.dbglog.length > 30) {
+    gbl.dbglog.shift();
   }
-  gbl.log.push(str);
+  gbl.dbglog.push(str);
 }
 
 function drawAnimations(animations) {
@@ -567,7 +574,7 @@ function main() {
   }
   drawPlayers();
   drawCountdown();
-  // drawDebug();
+  drawDebug();
   gbl.lastUpdate = current;
   setTimeout(main, 1000 / 60);
 }
