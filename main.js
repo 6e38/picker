@@ -517,8 +517,6 @@ function drawDebug() {
   const ctx = gbl.ctx;
   ctx.font = '50px monospace';
   ctx.fillStyle = '#ffffff';
-  // ctx.fillText('v2', 10, 50);
-  // return;
   ctx.fillText('player  count: ' + Object.keys(gbl.players).length, 10, 50);
   ctx.fillText('cancel  count: ' + gbl.cancelCount, 10, 100);
   ctx.fillText('start   count: ' + gbl.startCount, 10, 150);
@@ -574,7 +572,7 @@ function main() {
   }
   drawPlayers();
   drawCountdown();
-  drawDebug();
+  // drawDebug();
   gbl.lastUpdate = current;
   setTimeout(main, 1000 / 60);
 }
